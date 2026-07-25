@@ -107,6 +107,9 @@ def create_app(
         allow_origins=[
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "https://frontend-three-amber-34.vercel.app",
+            "https://somach-dino-dashboard.vercel.app",
+            "https://frontend-ebtk2n0em-carls-projects-2e834274.vercel.app",
         ],
         allow_credentials=False,
         allow_methods=["GET", "POST"],

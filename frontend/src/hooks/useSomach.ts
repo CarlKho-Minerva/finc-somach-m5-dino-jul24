@@ -59,15 +59,17 @@ function resolveWebSocketUrl(): string {
     return `${protocol}//${window.location.host}${path}`;
   }
 
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const host = import.meta.env.DEV
-    ? `${window.location.hostname || "localhost"}:8123`
-    : window.location.host;
-  return `${protocol}//${host}/ws`;
+  if (import.meta.env.DEV) {
+    return `ws://${window.location.hostname || "localhost"}:8123/ws`;
+  }
+  return "ws://127.0.0.1:8123/ws";
 }
 
 function resolveApiPath(path: string): string {
   const configured = import.meta.env.VITE_API_BASE?.trim().replace(/\/$/, "");
+  if (!configured && import.meta.env.PROD) {
+    return `http://127.0.0.1:8123${path}`;
+  }
   if (!configured) return path;
   if (configured.endsWith("/api") && path.startsWith("/api/")) {
     return `${configured}${path.slice(4)}`;

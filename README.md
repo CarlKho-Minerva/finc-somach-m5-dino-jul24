@@ -508,4 +508,5 @@ Scientific context and recovered project history:
 - [Kapur et al., *AlterEgo* (IUI 2018)](https://doi.org/10.1145/3172944.3172977)
 - [Carl Kho's open sEMG code and data](https://github.com/CarlKho-Minerva/Somach_sEMG-Silent-Speech)
 - [Capstone project narrative](https://somach.vercel.app/editorial/jump.html)
+- [Live Vercel dashboard](https://frontend-three-amber-34.vercel.app)
 - [Related arXiv paper](https://arxiv.org/abs/2601.06516)

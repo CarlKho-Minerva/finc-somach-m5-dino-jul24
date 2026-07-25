@@ -76,7 +76,7 @@ exact-pin firmware, a three-second personal zeroing flow, and direct game input.
 
 **Live project / website URL**
 
-**[REPLACE WITH PUBLIC PROJECT PAGE; DO NOT SUBMIT LOCALHOST]**
+https://frontend-three-amber-34.vercel.app
 
 Supporting public project history: https://somach.vercel.app/editorial/jump.html
 
