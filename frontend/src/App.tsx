@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 import { Oscilloscope } from "./components/Oscilloscope";
 import { useSomach } from "./hooks/useSomach";
@@ -57,6 +57,11 @@ function formatRms(value: number): string {
   return value.toFixed(2);
 }
 
+function formatThresholdInput(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  return value >= 100 ? value.toFixed(0) : value.toFixed(1);
+}
+
 function formatLatency(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "—";
   if (value < 1) return "<1 ms";
@@ -107,6 +112,10 @@ export default function App() {
   const trialRunningRef = useRef(false);
   const [trialCue, setTrialCue] = useState<"3" | "2" | "1" | "JUMP NOW" | null>(null);
   const [learningBusy, setLearningBusy] = useState<"record" | "train" | null>(null);
+  const [thresholdDraft, setThresholdDraft] = useState(() =>
+    formatThresholdInput(telemetry.threshold),
+  );
+  const [thresholdEditing, setThresholdEditing] = useState(false);
 
   const isConnected = connection.status === "connected";
   const sourceName = telemetry.source.toLowerCase();
@@ -125,6 +134,12 @@ export default function App() {
     mockCooldownRef.current = now;
     void triggerMock();
   }, [triggerMock]);
+
+  useEffect(() => {
+    if (!thresholdEditing) {
+      setThresholdDraft(formatThresholdInput(telemetry.threshold));
+    }
+  }, [telemetry.threshold, thresholdEditing]);
 
   const runGuidedTrial = useCallback(async () => {
     if (trialRunningRef.current || !telemetry.recording.active) return;
@@ -198,6 +213,24 @@ export default function App() {
     setLearningBusy("train");
     await trainModel();
     setLearningBusy(null);
+  };
+
+  const commitThreshold = async (value: number) => {
+    if (!Number.isFinite(value) || value < 0) return;
+    const rounded = Math.round(value * 10) / 10;
+    setThresholdEditing(false);
+    setThresholdDraft(formatThresholdInput(rounded));
+    await setThreshold(rounded);
+  };
+
+  const handleThresholdSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (thresholdDraft.trim() === "") return;
+    await commitThreshold(Number(thresholdDraft));
+  };
+
+  const nudgeThreshold = async (delta: number) => {
+    await commitThreshold(Math.max(0, telemetry.threshold + delta));
   };
 
   const openGame = () => {
@@ -364,6 +397,46 @@ export default function App() {
               </div>
               <span className="drag-hint">Drag the amber line to tune</span>
             </div>
+
+            <form className="threshold-control" onSubmit={(event) => void handleThresholdSubmit(event)}>
+              <label htmlFor="threshold-input">
+                <span>Threshold</span>
+                <input
+                  id="threshold-input"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.5"
+                  value={thresholdDraft}
+                  disabled={!isConnected}
+                  onBlur={() => setThresholdEditing(false)}
+                  onChange={(event) => {
+                    setThresholdEditing(true);
+                    setThresholdDraft(event.target.value);
+                  }}
+                  onFocus={() => setThresholdEditing(true)}
+                />
+              </label>
+              <button type="button" disabled={!isConnected} onClick={() => void nudgeThreshold(-5)}>
+                -5
+              </button>
+              <button type="button" disabled={!isConnected} onClick={() => void nudgeThreshold(5)}>
+                +5
+              </button>
+              <button type="button" disabled={!isConnected} onClick={() => void commitThreshold(65)}>
+                65
+              </button>
+              <button
+                type="submit"
+                disabled={
+                  !isConnected ||
+                  thresholdDraft.trim() === "" ||
+                  !Number.isFinite(Number(thresholdDraft))
+                }
+              >
+                Apply
+              </button>
+            </form>
           </section>
 
           <aside className="control-column">
