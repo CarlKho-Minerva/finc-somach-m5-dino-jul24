@@ -1,0 +1,7 @@
+fastapi==0.110.0
+uvicorn==0.28.0
+websockets==12.0
+numpy==1.26.4
+scipy==1.12.0
+pyserial==3.5
+pyobjc-framework-Quartz==10.1
