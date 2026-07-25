@@ -41,11 +41,20 @@ def test_rms_is_emitted_every_20ms_after_trailing_window_is_full() -> None:
     assert result.latest_rms == pytest.approx(0.0, abs=1e-8)
 
 
-def test_trigger_gate_has_refractory_and_requires_hysteretic_rearm() -> None:
-    gate = TriggerGate(refractory_ms=250, rearm_ratio=0.65)
+def test_trigger_gate_requires_hysteretic_rearm_without_flappy_lockout() -> None:
+    gate = TriggerGate(refractory_ms=0, rearm_ratio=0.65)
 
     assert gate.evaluate(11, 10, 1.00, enabled=True)
     assert not gate.evaluate(12, 10, 1.30, enabled=True)
     assert not gate.evaluate(6, 10, 1.31, enabled=True)
     assert gate.evaluate(11, 10, 1.32, enabled=True)
     assert not gate.evaluate(11, 10, 1.40, enabled=False)
+
+
+def test_trigger_gate_can_still_apply_optional_refractory() -> None:
+    gate = TriggerGate(refractory_ms=250, rearm_ratio=0.65)
+
+    assert gate.evaluate(11, 10, 1.00, enabled=True)
+    assert not gate.evaluate(6, 10, 1.01, enabled=True)
+    assert not gate.evaluate(11, 10, 1.10, enabled=True)
+    assert gate.evaluate(11, 10, 1.26, enabled=True)

@@ -103,7 +103,7 @@ class StreamingEMGProcessor:
 
 
 class TriggerGate:
-    """Refractory plus hysteretic re-arm to prevent sustained double jumps."""
+    """Optional refractory plus hysteretic re-arm for discrete gestures."""
 
     def __init__(self, refractory_ms: int, rearm_ratio: float):
         self.refractory_seconds = refractory_ms / 1_000

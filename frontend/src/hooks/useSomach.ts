@@ -36,7 +36,7 @@ const initialTelemetry: TelemetryState = {
     threshold: null,
     error: null,
   },
-  refractoryMs: 250,
+  refractoryMs: 0,
   latencyMs: null,
   lastPacketAt: null,
   lastJumpAt: null,

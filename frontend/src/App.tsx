@@ -337,7 +337,7 @@ export default function App() {
           <StatusCell
             label="Quartz call"
             value={formatLatency(quartzCallMs)}
-            detail={`Native post only · lockout ${telemetry.refractoryMs} ms`}
+            detail={`Native post only · lockout ${telemetry.refractoryMs} ms · re-arm below threshold`}
             tone={quartzCallMs !== null ? "good" : "neutral"}
           />
         </section>

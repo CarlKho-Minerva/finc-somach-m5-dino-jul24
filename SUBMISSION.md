@@ -40,8 +40,8 @@ exact-pin firmware, a three-second personal zeroing flow, and direct game input.
   1,000 Hz USB firmware with lead-off, clipping, timing, and drop telemetry.
 - Built a causal 60 Hz notch, Butterworth bandpass, streaming RMS envelope, and
   a three-second personal threshold calibration (`mu + 3.5 sigma`).
-- Added refractory and hysteretic trigger logic plus native Quartz Space events
-  to control Flappy Bird without PyAutoGUI.
+- Removed the fixed debounce for Flappy Bird while keeping hysteretic re-arm,
+  then used native Quartz Space events to control the game without PyAutoGUI.
 - Built a local FastAPI/WebSocket backend with both deterministic mock and live
   hardware modes.
 - Built a dark React Canvas oscilloscope plus an atomic local recorder, guided
@@ -115,7 +115,7 @@ the chin/electrodes. Do not show slides.
 | `0:23-0:27` | In silence, arm detection, click Flappy Bird last, and move both hands visibly away. | _Say nothing._ |
 | `0:27-0:42` | Stay silent. Perform three strong rehearsed tongue-up/back JUMP gestures about one second apart. | _Say nothing._ |
 | `0:42-0:46` | Still silent, click the dashboard and switch detection back to **paused**. | _Say nothing._ |
-| `0:46-0:54` | Show counter `03`, live rig, and Flappy Bird. | "Three gestures made three native Space events. The 250 millisecond lockout prevents double jumps." |
+| `0:46-0:54` | Show counter `03`, live rig, and Flappy Bird. | "Three gestures made three native Space events. There is no fixed debounce now, so fast repeated flaps are possible." |
 | `0:54-0:59` | End on the functioning rig and local-processing footer. | "It detects a voluntary speech-motor gesture, not thoughts." |
 
 Speaking, swallowing, coughing, and jaw motion overlap this single-channel energy

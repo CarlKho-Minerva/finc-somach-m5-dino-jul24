@@ -26,7 +26,7 @@ class Settings:
     rms_stride_ms: int = 20
     calibration_seconds: float = 3.0
     threshold_sigma: float = 3.5
-    refractory_ms: int = 250
+    refractory_ms: int = 0
     rearm_ratio: float = 0.65
 
     host: str = "127.0.0.1"

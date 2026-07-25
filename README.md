@@ -23,7 +23,8 @@ localhost:3000                  localhost:8123
 - Stateful causal DSP: 60 Hz notch (`Q=30`), fourth-order Butterworth bandpass,
   and a trailing 150 ms RMS envelope evaluated every 20 ms.
 - Three-second zeroing: `threshold = resting mean + 3.5 * resting standard
-  deviation`, followed by a 250 ms refractory period and hysteretic re-arm.
+  deviation`, followed by hysteretic re-arm. The Flappy Bird build uses no
+  fixed debounce/lockout so quick repeated flaps are possible.
 - Deterministic `--mock` mode and live `--hardware` USB serial mode.
 - FastAPI controls, a 50 Hz batched WebSocket, and a 60 FPS React Canvas
   dashboard with raw, filtered, RMS, threshold, lead-off, and jump telemetry.
@@ -373,7 +374,7 @@ and does not by itself know whether a burst was JUMP, a swallow, or speech.**
 | **Armed / Paused** | Armed allows accepted crossings to post Space; Paused keeps plotting but posts no keys. |
 | **JUMP events** | Accepted detector events in this session. It counts triggers, not proven linguistic decoding. |
 | **Clipping** | Samples pinned near `0` or `4095`, usually from a floating, saturated, or bad-contact signal. Unsafe windows are rejected. |
-| **250 ms lockout** | Refractory time after a trigger, plus hysteretic re-arm, prevents one long burst from creating repeated jumps. It does not reject swallows. |
+| **Lockout / re-arm** | The Flappy build has `0 ms` fixed lockout for fast repeated flaps. Hysteretic re-arm still requires the RMS envelope to fall below the re-arm level before another accepted trigger. It does not reject swallows. |
 | **Recording elapsed / markers / samples** | Local collection duration, labeled cue/artifact count, and raw sample count. |
 | **Balanced accuracy** | Average of JUMP recall and non-JUMP recall on held-out trial groups; `50%` is chance for a balanced binary decision. |
 | **RMS / MODEL** | Selects the calibrated energy detector or a validated local classifier. MODEL should stay off when its held-out result is weak. |
@@ -386,7 +387,7 @@ Default processing is causal and stateful:
 1 kHz ADC -> 60 Hz IIR notch, Q=30
           -> fourth-order 20-250 Hz Butterworth, SOS form
           -> trailing 150 ms RMS, evaluated every 20 ms
-          -> calibrated threshold + 250 ms refractory + hysteretic re-arm
+          -> calibrated threshold + no fixed lockout + hysteretic re-arm
 ```
 
 The dashboard reports processing time, block-to-trigger pipeline time, and the
