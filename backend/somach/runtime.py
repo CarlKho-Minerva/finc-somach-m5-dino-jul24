@@ -192,11 +192,13 @@ class SomachRuntime:
                     self.calibrated = True
                     self.calibration.active = False
                     self.calibration.completed_at = time.monotonic()
-                    self.armed = True
+                    # Calibration establishes a threshold but never grants key-posting
+                    # authority. The wearer explicitly arms after setup/narration.
+                    self.armed = False
                     self.gate.reset()
 
         # A baseline sample must never double as a command, including the final
-        # sample that transitions calibration into the armed state.
+        # sample that completes calibration.
         if was_calibrating:
             return None
 

@@ -112,7 +112,7 @@ export default function App() {
   const sourceName = telemetry.source.toLowerCase();
   const isMock = sourceName.includes("mock") || sourceName.includes("synthetic");
   const calibrationPercent = Math.round(telemetry.calibration.progress * 100);
-  const latency = telemetry.quartz.lastCallMs ?? telemetry.latencyMs;
+  const quartzCallMs = telemetry.quartz.lastCallMs;
   const modelMetric = telemetry.model.balancedAccuracy ?? telemetry.model.accuracy;
   const modelValid = telemetry.model.available && !telemetry.model.error;
   const modelScoreCopy = telemetry.model.score === null
@@ -302,10 +302,10 @@ export default function App() {
             tone={quartzTone}
           />
           <StatusCell
-            label="Event latency"
-            value={formatLatency(latency)}
-            detail={`Target <80 ms · lockout ${telemetry.refractoryMs} ms`}
-            tone={latency !== null && latency < 80 ? "good" : "neutral"}
+            label="Quartz call"
+            value={formatLatency(quartzCallMs)}
+            detail={`Native post only · lockout ${telemetry.refractoryMs} ms`}
+            tone={quartzCallMs !== null ? "good" : "neutral"}
           />
         </section>
 
@@ -370,7 +370,7 @@ export default function App() {
             <section className="panel jump-panel">
               <div className="jump-header">
                 <div>
-                  <span className="eyebrow">Decoded intent</span>
+                  <span className="eyebrow">Gesture detector</span>
                   <h2>JUMP events</h2>
                 </div>
                 <span className="jump-status">SESSION</span>
@@ -379,7 +379,7 @@ export default function App() {
                 <span key={telemetry.jumpCount} className="jump-count">
                   {telemetry.jumpCount.toString().padStart(2, "0")}
                 </span>
-                <span className="jump-unit">decoded triggers</span>
+                <span className="jump-unit">accepted triggers</span>
               </div>
 
               <button
@@ -602,7 +602,7 @@ export default function App() {
             <strong key={trialCue}>{trialCue}</strong>
             <small>
               {trialCue === "JUMP NOW"
-                ? "Think the word JUMP without speaking"
+                ? "Make the rehearsed silent JUMP gesture"
                 : "Keep your jaw and neck still"}
             </small>
           </div>

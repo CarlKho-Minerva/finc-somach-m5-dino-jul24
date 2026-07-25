@@ -28,9 +28,37 @@ localhost:3000                  localhost:8123
 - FastAPI controls, a 50 Hz batched WebSocket, and a 60 FPS React Canvas
   dashboard with raw, filtered, RMS, threshold, lead-off, and jump telemetry.
 - Native macOS key events through Quartz `CGEventPost`; no PyAutoGUI delay.
+- Local aligned recording, guided JUMP/artifact labels, trial-grouped held-out
+  validation, and a reversible learned-model/RMS selector.
 
 This is **silent articulation**, not thought reading. It detects a voluntary,
 closed-mouth motor gesture associated with JUMP.
+
+## Verified live-hardware results
+
+These are measurements from Carl's single-channel rig during the July 24, 2026
+Night Hack session, not mock-mode estimates:
+
+| Check | Measured result | What it means |
+| --- | --- | --- |
+| Hardware route | `OUTPUT -> GPIO36`, `SDN -> GPIO27` | Restored the wiring/firmware combination that had worked previously; GPIO34 was a floating input on this physical layout. |
+| Acquisition | Stable `1,000 Hz`; `0%` live clipping after the pads were attached | The complete AD8232 -> ESP32 -> USB -> Mac data path worked with usable contact. |
+| Three-second rest calibration | RMS `mu = 11.32`, `sigma = 8.73`, automatic `T = 41.88` ADC counts | The baseline calculation worked, but the automatic threshold was too sensitive to ordinary mouth/neck activity. |
+| Real data captured | `358,700` clean samples across three sessions (`358.7 s` total) | The recorder saved about six minutes atomically; the labeled session contains 8 JUMP and 12 artifact markers. |
+| Hard negatives | Swallow peaks reached `112.95`; three clean JUMP peaks reached `77.42`, `116.57`, and `93.62` RMS | A single amplitude threshold cannot honestly distinguish every JUMP from every swallow or spoken movement. |
+| Learned-model check | Held-out balanced accuracy `60%`, recall `50%` | The small one-session model failed the deployment bar, so **MODEL remains off**. |
+| Controlled game rehearsal | Exactly `3/3` deliberate silent gestures produced three detector events and three Quartz Space posts | The core demo works when detection is gated to a short, silent command window at the tested RMS threshold of `65`. |
+
+The measured Quartz posting call was roughly `0.05-0.52 ms`. That is only the
+native API call overhead, not mouth-to-game latency. Unrestricted swallowing,
+talking, coughing, or jaw motion can still false-trigger this one-channel
+energy detector. During a demo, keep detection paused for setup and narration,
+then arm it only while the wearer is silent and deliberately issuing commands.
+
+![SOMACH dashboard receiving the live ESP32 hardware signal](docs/live-hardware-dashboard.png)
+
+*Authentic local hardware capture: 1,000 Hz input, contact good, RMS threshold
+65, weak learned model left inactive, and detection paused while documenting.*
 
 ## Why the M5 GPU and a TCN are not used tonight
 
@@ -38,8 +66,10 @@ The M5 Max can run MLX, PyTorch MPS, and a temporal convolutional network, but
 GPU execution is the wrong optimization for this demo:
 
 - The live input is one channel in 20-sample blocks, not a large tensor.
-- This exact chin placement has no labeled JUMP/rest training set yet. Training
-  a TCN now would replace a calibrated detector with an unvalidated model.
+- This session produced only 8 labeled JUMPs and 12 artifacts from one wearer.
+  Its lightweight held-out classifier reached `60%` balanced accuracy and
+  `50%` recall, which is evidence that more data are needed, not a reason to
+  deploy a larger model.
 - Prior capstone models were placement- and session-sensitive; their weights do
   not transfer honestly to this new single-channel judge setup.
 - Dispatching tiny operations to a GPU adds synchronization and framework
@@ -47,9 +77,10 @@ GPU execution is the wrong optimization for this demo:
   and lower-overhead on the CPU.
 - The CPU path remains local and works offline after dependencies are installed.
 
-Collect labeled multi-user JUMP/rest windows first, validate by held-out person
-and session, then compare a small TCN against this threshold baseline. The
-dashboard and API already provide the acquisition foundation for that work.
+Collect many labeled JUMP, swallow, speech, cough, jaw-motion, and rest windows
+across users and replacement sessions first. Validate by held-out person and
+session, then compare a small TCN against this threshold baseline. The dashboard
+and API already provide the acquisition foundation for that work.
 
 ## Safety first
 
@@ -241,14 +272,19 @@ the reset-loop fix recovered from the earlier capstone.
 2. Attach the electrode pair over the target submental area and the reference
    to the chosen bony reference site. Keep placement fixed for the session.
 3. Relax the jaw and tongue. Click **Calibrate baseline** and remain completely
-   still for the full three seconds. Calibration automatically arms detection.
-4. If normal breathing triggers events, drag the amber threshold upward. If a
-   clear articulation never triggers, lower it slightly or recalibrate.
+   still for the full three seconds. Calibration sets the threshold but leaves
+   **Detection paused**; arming always requires a separate deliberate action.
+4. The formula is a starting point, not a swallow classifier. If normal mouth
+   activity triggers events, drag the amber threshold upward. Carl's tested
+   filming value was `65`; a new wearer or pad placement needs retuning.
 5. Open `chrome://dino` or use the dashboard's **Open Dino** button. Press Space
    once manually to start the game.
-6. Put the dashboard and Dino side by side, but click **Dino last**. Quartz sends
+6. Finish every spoken explanation while detection is paused. Say how many
+   silent commands are coming, swallow if needed, then turn detection on.
+7. Put the dashboard and Dino side by side, but click **Dino last**. Quartz sends
    Space to the frontmost application. If you touch the dashboard, refocus Dino.
-7. Silently articulate JUMP with the trained closed-mouth tongue/jaw gesture.
+8. Stay silent and articulate JUMP with the rehearsed closed-mouth tongue-up/back
+   gesture. After the final command, pause detection before speaking again.
 
 ### Optional local session learning
 
@@ -278,6 +314,20 @@ Model activation is reversible and initially falls back to RMS until its first
 300 ms feature window is ready. Re-record and retrain after moving electrodes
 or changing users; a one-session score is demo evidence, not generalization.
 
+In the July 24 session, the held-out result was `60%` balanced accuracy with
+`50%` JUMP recall, so it did **not** earn activation. The live demo deliberately
+uses the simpler RMS detector and shows that choice rather than hiding a weak
+model behind the M5 Max GPU.
+
+For the next collection, keep **JUMP** as the positive class, keep passive rest
+as background, and preserve hard-negative subtypes such as **swallow**, **spoken
+speech**, **cough/throat-clear**, **jaw/tongue motion**, and **pad/cable motion**.
+They may all collapse to `not JUMP` for a binary controller, but retaining the
+subtype reveals which behavior causes false positives. Tonight's UI stores one
+generic `artifact` label, so the 12 negatives are sufficient for a pipeline
+check but not for subtype-level claims; do not call every negative merely
+"noise."
+
 ### Grant Quartz Accessibility access
 
 Start once with `--prompt-accessibility`, then open:
@@ -288,6 +338,44 @@ Enable the terminal application that launches the backend (Terminal, iTerm, or
 the relevant host). Quit and restart that terminal and the backend after changing
 permission. The dashboard must show **Authorized**. Grant access only to the
 known local terminal/process; macOS treats it as permission to control input.
+
+## Dashboard glossary: what RMS and the labels mean
+
+EMG is an alternating electrical waveform: useful muscle activity swings above
+and below its local center. A normal arithmetic mean can therefore look close
+to zero even during a strong burst because positive and negative samples cancel.
+Root mean square (RMS) turns the recent oscillation into one stable measure of
+burst strength:
+
+```text
+RMS = sqrt((x1^2 + x2^2 + ... + xN^2) / N)
+```
+
+Here `x` is the centered, filtered signal and `N = 150` samples, or `150 ms` at
+`1,000 Hz`. Squaring makes both polarities positive, averaging suppresses
+sample-to-sample jitter, and the square root returns the result to ADC-count
+units. **RMS measures recent muscle-signal energy; it is not a word probability
+and does not by itself know whether a burst was JUMP, a swallow, or speech.**
+
+| Dashboard label | Plain-English meaning |
+| --- | --- |
+| **Input source** | `Hardware` is the real USB rig; `Mock` is deterministic synthetic test data. |
+| **Sampling** | Actual ADC samples received per second. The target is about `1,000 Hz`. |
+| **Electrodes / LO+ / LO-** | AD8232 digital contact indicators. GPIO32 and GPIO35 report a detached differential lead; they are not extra EMG channels. |
+| **Quartz access** | Whether macOS permits the backend to post a native Space key. |
+| **Quartz call** | Duration of the most recent native key-posting API call, not full mouth-to-screen latency. A dash means no key has been posted in this run. |
+| **Raw ADC** | The ESP32's unsigned 12-bit voltage reading (`0-4095`) before software filtering. |
+| **20-250 Hz filtered** | Raw signal centered and passed through the causal 60 Hz notch plus digital bandpass. The physical AD8232 board may have a narrower analog bandwidth. |
+| **150 ms RMS** | Recent filtered burst strength calculated with the formula above. |
+| **Threshold / T** | The amber decision line. An armed upward crossing can create one JUMP event. Auto-zeroing starts at `T = mu + 3.5 sigma`; the line is draggable. |
+| **mu / sigma** | Resting RMS mean and standard deviation: the baseline level and how much it naturally varies. |
+| **Armed / Paused** | Armed allows accepted crossings to post Space; Paused keeps plotting but posts no keys. |
+| **JUMP events** | Accepted detector events in this session. It counts triggers, not proven linguistic decoding. |
+| **Clipping** | Samples pinned near `0` or `4095`, usually from a floating, saturated, or bad-contact signal. Unsafe windows are rejected. |
+| **250 ms lockout** | Refractory time after a trigger, plus hysteretic re-arm, prevents one long burst from creating repeated jumps. It does not reject swallows. |
+| **Recording elapsed / markers / samples** | Local collection duration, labeled cue/artifact count, and raw sample count. |
+| **Balanced accuracy** | Average of JUMP recall and non-JUMP recall on held-out trial groups; `50%` is chance for a balanced binary decision. |
+| **RMS / MODEL** | Selects the calibrated energy detector or a validated local classifier. MODEL should stay off when its held-out result is weak. |
 
 ## DSP and latency: what the numbers mean
 

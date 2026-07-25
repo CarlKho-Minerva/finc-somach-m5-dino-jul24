@@ -46,7 +46,7 @@ def test_calibration_is_exact_mean_plus_three_point_five_sigma() -> None:
     assert runtime.baseline_std == pytest.approx(1.0)
     assert runtime.threshold == pytest.approx(14.5)
     assert runtime.calibrated
-    assert runtime.armed
+    assert runtime.armed is False
     assert runtime.calibration.progress == 1.0
 
 
@@ -60,9 +60,10 @@ def test_final_calibration_point_cannot_trigger_a_jump() -> None:
     runtime.begin_calibration()
     assert runtime._handle_rms(100.0, time.perf_counter()) is None
     assert runtime.calibrated is True
-    assert runtime.armed is True
+    assert runtime.armed is False
     assert injector.calls == 0
 
+    runtime.set_armed(True)
     event = runtime._handle_rms(101.0, time.perf_counter())
     assert event is not None
     assert injector.calls == 1
