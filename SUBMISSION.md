@@ -17,13 +17,13 @@ SOMACH **[CONFIRM]**
 
 **[CONFIRM OR REPLACE: carl@somach.life]**
 
-**One-liner (41/50 characters)**
+**One-liner (40/50 characters)**
 
-Subvocalized JUMP makes Chrome Dino jump.
+Subvocalized JUMP controls Flappy Bird.
 
 **Short project description**
 
-SOMACH is a local silent-articulation controller for Chrome Dino. An AD8232 on
+SOMACH is a local silent-articulation controller for Flappy Bird. An AD8232 on
 the chin captures the voluntary muscle impulse of a rehearsed closed-mouth JUMP
 gesture; an ESP32 streams it at 1 kHz to a Mac, which filters and calibrates the
 signal, then posts a native macOS Space event. A live dashboard shows the
@@ -41,7 +41,7 @@ exact-pin firmware, a three-second personal zeroing flow, and direct game input.
 - Built a causal 60 Hz notch, Butterworth bandpass, streaming RMS envelope, and
   a three-second personal threshold calibration (`mu + 3.5 sigma`).
 - Added refractory and hysteretic trigger logic plus native Quartz Space events
-  to control Chrome Dino without PyAutoGUI.
+  to control Flappy Bird without PyAutoGUI.
 - Built a local FastAPI/WebSocket backend with both deterministic mock and live
   hardware modes.
 - Built a dark React Canvas oscilloscope plus an atomic local recorder, guided
@@ -68,11 +68,11 @@ exact-pin firmware, a three-second personal zeroing flow, and direct game input.
 
 **60-second demo video**
 
-**[UPLOAD THE FINAL MP4, MAX 60 MB]**
+Explainer video: https://www.loom.com/share/8c0837809c0b4ac1a595ac519f4e1025
 
 **Demo link**
 
-**[REPLACE WITH PUBLIC URL TO THE 10-SECOND HARDWARE CLIP OR MAIN VIDEO]**
+Live hardware demo: https://x.com/Carl_NotANerd/status/2080905802735661263
 
 **Live project / website URL**
 
@@ -85,8 +85,8 @@ Supporting public project history: https://somach.vercel.app/editorial/jump.html
 **[UPLOAD A PHOTO SHOWING CARL/TEAM WITH THE ESP32 + AD8232 RIG]**
 
 Take a real landscape phone photo: Carl in frame, intact chin electrodes clearly
-visible, ESP32 and AD8232 visible on the desk, and the SOMACH waveform or Dino in
-the background. Brace the loose USB cable first, remove the Mac charger and
+visible, ESP32 and AD8232 visible on the desk, and the SOMACH waveform or
+Flappy Bird in the background. Brace the loose USB cable first, remove the Mac charger and
 other mains-connected peripherals, and hide unrelated/private screen content.
 The repository dashboard screenshot documents software state but does **not**
 replace this required team photo. Do not use an AI-generated hardware photo.
@@ -103,19 +103,19 @@ https://github.com/CarlKho-Minerva/finc-somach-m5-dino-jul24
 
 Before recording, calibrate at rest, set the tested RMS threshold to `65`, select
 **RMS**, reset the counter to `00`, and leave **Detection paused**. Record one
-continuous take with Dino left, SOMACH right, and a webcam bubble clearly showing
+continuous take with Flappy Bird left, SOMACH right, and a webcam bubble clearly showing
 the chin/electrodes. Do not show slides.
 
 | Time | Screen action | Spoken line |
 | --- | --- | --- |
-| `0:00-0:06` | With detection **paused**, show the wired chin sensor, dashboard, and Dino. | "This is SOMACH. A deliberate silent JUMP gesture controls Chrome Dino from my chin muscles." |
+| `0:00-0:06` | With detection **paused**, show the wired chin sensor, dashboard, and Flappy Bird. | "This is SOMACH. A deliberate silent JUMP gesture controls Flappy Bird from my chin muscles." |
 | `0:06-0:12` | Point to the AD8232/ESP32 and the live `1,000 Hz` status. | "The low-cost sensor streams one thousand samples per second over USB, entirely locally." |
 | `0:12-0:18` | Point to raw, filtered, RMS, and threshold traces. | "RMS turns the oscillating muscle signal into a stable burst-strength number for detection." |
 | `0:18-0:23` | Show calibrated/contact/Quartz status; remain paused. Swallow now if needed. | "I zeroed my resting baseline. Next are exactly three silent commands, with my hands off." |
-| `0:23-0:27` | In silence, arm detection, click Dino last, and move both hands visibly away. | _Say nothing._ |
+| `0:23-0:27` | In silence, arm detection, click Flappy Bird last, and move both hands visibly away. | _Say nothing._ |
 | `0:27-0:42` | Stay silent. Perform three strong rehearsed tongue-up/back JUMP gestures about one second apart. | _Say nothing._ |
 | `0:42-0:46` | Still silent, click the dashboard and switch detection back to **paused**. | _Say nothing._ |
-| `0:46-0:54` | Show counter `03`, live rig, and Dino. | "Three gestures made three native Space events. The 250 millisecond lockout prevents double jumps." |
+| `0:46-0:54` | Show counter `03`, live rig, and Flappy Bird. | "Three gestures made three native Space events. The 250 millisecond lockout prevents double jumps." |
 | `0:54-0:59` | End on the functioning rig and local-processing footer. | "It detects a voluntary speech-motor gesture, not thoughts." |
 
 Speaking, swallowing, coughing, and jaw motion overlap this single-channel energy
@@ -130,8 +130,8 @@ short clip.
 | Time | Shot |
 | --- | --- |
 | `0:00-0:02` | Silent close-up of intact chin electrodes, AD8232, and ESP32 USB connection; detection is paused. |
-| `0:02-0:03` | In silence, arm detection and click Dino last. |
-| `0:03-0:08` | Hands off keyboard; perform two rehearsed silent JUMP gestures while Dino visibly jumps twice. |
+| `0:02-0:03` | In silence, arm detection and click Flappy Bird last. |
+| `0:03-0:08` | Hands off keyboard; perform two rehearsed silent JUMP gestures while Flappy Bird visibly flaps twice. |
 | `0:08-0:09` | Return to the dashboard and pause detection, still without speaking. |
 | `0:09-0:10` | Hold on the dashboard jump counter at `02`. |
 
@@ -143,7 +143,7 @@ and game jump.
 
 | Criterion | What the demo proves |
 | --- | --- |
-| Progress tonight | Prior research hardware became exact-pin 1 kHz firmware, a local real-time pipeline, a judge-calibration UX, and a direct Dino controller. |
+| Progress tonight | Prior research hardware became exact-pin 1 kHz firmware, a local real-time pipeline, a judge-calibration UX, and a direct Flappy Bird controller. |
 | Technical difficulty and execution | The system crosses analog biosensing, deterministic embedded sampling, causal DSP, asynchronous WebSockets, macOS permissions, and native input injection. |
 | Core demo quality | Stable real 1 kHz input, 0% live clipping, visible contact/threshold state, and an exact 3-for-3 controlled rehearsal make the central JUMP loop inspectable. |
 | Originality and potential | It turns closed-mouth speech motor activity into a general local control primitive using roughly $40 consumer hardware. |
@@ -188,7 +188,7 @@ during the five-hour hack.
 - Keep the Mac on internal battery with chargers and mains-powered peripherals
   disconnected while electrodes are on a person.
 - If selected for the Top 10, bring up the same live hardware/software view.
-  No slides, no deck, and no opening pitch: calibrate, focus Dino, demonstrate.
+  No slides, no deck, and no opening pitch: calibrate, focus Flappy Bird, demonstrate.
 
 ## Pre-submit checklist
 
@@ -198,9 +198,9 @@ during the five-hour hack.
 - Do not use `localhost` as the submitted URL; hardware proof should be a public
   video link.
 - Test the exact hardware, USB cable, battery-only setup, Accessibility grant,
-  Chrome focus, calibration, and threshold immediately before recording.
+  Chrome/Flappy Bird focus, calibration, and threshold immediately before recording.
 - Brace the loose USB cable. Select **RMS**, set the tested threshold to `65`,
   reset the counter to `00`, and keep detection paused until narration ends.
 - After the silent commands, pause detection again before speaking or swallowing.
 - Keep the local mock mode ready as a diagnostic fallback, but lead with the
-  physical chin-to-Dino loop.
+  physical chin-to-Flappy loop.

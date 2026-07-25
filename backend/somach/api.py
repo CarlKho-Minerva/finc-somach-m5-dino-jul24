@@ -96,7 +96,7 @@ def create_app(
             await engine.stop()
 
     app = FastAPI(
-        title="SOMACH Silent Speech Dino API",
+        title="SOMACH Silent Speech Game API",
         version="1.0.0",
         lifespan=lifespan,
     )

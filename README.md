@@ -1,8 +1,8 @@
-# SOMACH: subvocalized JUMP -> Chrome Dino
+# SOMACH: subvocalized JUMP -> Flappy Bird
 
 SOMACH turns one submental muscle signal into a native macOS `SPACE` event. A
 judge silently articulates **JUMP**, an AD8232 and ESP32 stream the resulting
-sEMG over USB, and Chrome Dino jumps. Signal acquisition, filtering, threshold
+sEMG over USB, and Flappy Bird flaps. Signal acquisition, filtering, threshold
 detection, telemetry, and key injection all run locally on the Mac.
 
 Target machine: **16-inch MacBook Pro, Apple M5 Max, 18-core CPU, 40-core GPU,
@@ -12,7 +12,7 @@ Target machine: **16-inch MacBook Pro, Apple M5 Max, 18-core CPU, 40-core GPU,
 chin electrodes -> AD8232 -> GPIO 36 -> ESP32 @ 1 kHz
                                       |
                                       v USB UART, 115200
-React dashboard <- WebSocket <- FastAPI + causal DSP -> Quartz SPACE -> Dino
+React dashboard <- WebSocket <- FastAPI + causal DSP -> Quartz SPACE -> Flappy
 localhost:3000                  localhost:8123
 ```
 
@@ -138,7 +138,7 @@ uv tool install --with pip platformio
 ```
 
 Dependency installation needs internet once. The runtime itself uses no cloud
-service; use `chrome://dino` for a fully offline game.
+service. The demo target is the browser game at `https://flappybird.io/`.
 
 ## Fastest demo start
 
@@ -154,10 +154,10 @@ For the physical rig after flashing the ESP32:
 ./scripts/start-demo.sh --hardware --prompt-accessibility
 ```
 
-Open the fully offline Chrome game in its own window with:
+Open Flappy Bird in its own Chrome window with:
 
 ```bash
-./scripts/open-dino.sh
+./scripts/open-flappy.sh
 ```
 
 Press `Control-C` in the launch terminal to stop the backend and dashboard.
@@ -230,8 +230,8 @@ baseline**, remain still for three seconds, then press Space on the dashboard or
 click **Trigger impulse**. Mock mode injects a deterministic 180 ms muscle burst
 through the same DSP and trigger path as hardware.
 
-To verify mock key injection while Dino remains frontmost, schedule the mock
-burst and click the Dino window before the two-second delay expires:
+To verify mock key injection while Flappy Bird remains frontmost, schedule the
+mock burst and click the Flappy Bird window before the two-second delay expires:
 
 ```bash
 (sleep 2; curl -s -X POST http://127.0.0.1:8123/api/mock/trigger >/dev/null) &
@@ -265,7 +265,7 @@ The serial connection explicitly disables DTR/RTS flow control and line states,
 waits two seconds for boot, and clears bootloader text before parsing. This is
 the reset-loop fix recovered from the earlier capstone.
 
-## Three-second calibration and Dino focus flow
+## Three-second calibration and Flappy Bird focus flow
 
 1. Start the backend and dashboard. Confirm **Signal live**, approximately
    `1000 Hz`, **Contact good**, and **Quartz authorized**.
@@ -277,12 +277,13 @@ the reset-loop fix recovered from the earlier capstone.
 4. The formula is a starting point, not a swallow classifier. If normal mouth
    activity triggers events, drag the amber threshold upward. Carl's tested
    filming value was `65`; a new wearer or pad placement needs retuning.
-5. Open `chrome://dino` or use the dashboard's **Open Dino** button. Press Space
-   once manually to start the game.
+5. Open Flappy Bird with `./scripts/open-flappy.sh` or use the dashboard's
+   **Open Flappy** button. Press Space once manually to start the game.
 6. Finish every spoken explanation while detection is paused. Say how many
    silent commands are coming, swallow if needed, then turn detection on.
-7. Put the dashboard and Dino side by side, but click **Dino last**. Quartz sends
-   Space to the frontmost application. If you touch the dashboard, refocus Dino.
+7. Put the dashboard and Flappy Bird side by side, but click **Flappy Bird
+   last**. Quartz sends Space to the frontmost application. If you touch the
+   dashboard, refocus Flappy Bird.
 8. Stay silent and articulate JUMP with the rehearsed closed-mouth tongue-up/back
    gesture. After the final command, pause detection before speaking again.
 
@@ -468,11 +469,11 @@ ls /dev/cu.*
 - Sample rate below roughly 950 Hz or rising drop counters: close serial tools,
   replace the cable, and avoid a hub.
 
-### Signal works, but Dino does not jump
+### Signal works, but Flappy Bird does not flap
 
 - Confirm calibration completed and **Detection armed** is on.
 - Confirm **Quartz authorized**; restart the terminal after granting access.
-- Click the Dino window last. Quartz targets the frontmost application.
+- Click the Flappy Bird window last. Quartz targets the frontmost application.
 - Raise the threshold for false positives; lower it slightly for missed events.
 - Try the 10-40 Hz compatibility filter if the breakout retains ECG filters.
 
@@ -509,4 +510,6 @@ Scientific context and recovered project history:
 - [Carl Kho's open sEMG code and data](https://github.com/CarlKho-Minerva/Somach_sEMG-Silent-Speech)
 - [Capstone project narrative](https://somach.vercel.app/editorial/jump.html)
 - [Live Vercel dashboard](https://frontend-three-amber-34.vercel.app)
+- [Live Flappy Bird hardware demo](https://x.com/Carl_NotANerd/status/2080905802735661263)
+- [One-minute Loom explainer](https://www.loom.com/share/8c0837809c0b4ac1a595ac519f4e1025)
 - [Related arXiv paper](https://arxiv.org/abs/2601.06516)

@@ -68,7 +68,7 @@ class QuartzKeyInjector:
             self.detail = (
                 "Accessibility access granted"
                 if self.trusted
-                else "Accessibility access required for Chrome key injection"
+                else "Accessibility access required for game key injection"
             )
         except Exception as exc:  # noqa: BLE001  # pragma: no cover - ObjC bridge
             self.trusted = False

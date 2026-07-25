@@ -200,10 +200,10 @@ export default function App() {
     setLearningBusy(null);
   };
 
-  const openDino = () => {
+  const openGame = () => {
     const game = window.open(
-      "https://chromedino.com",
-      "somach-dino",
+      "https://flappybird.io/",
+      "somach-flappy",
       "popup=yes,width=980,height=760,resizable=yes,scrollbars=yes",
     );
     game?.focus();
@@ -268,8 +268,8 @@ export default function App() {
                 ? "Reconnecting"
                 : "Connecting"}
           </div>
-          <button className="button button-secondary open-dino" type="button" onClick={openDino}>
-            Open Dino
+          <button className="button button-secondary open-game" type="button" onClick={openGame}>
+            Open Flappy
             <ArrowIcon />
           </button>
         </div>

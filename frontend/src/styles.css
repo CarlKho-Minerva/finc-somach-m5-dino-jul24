@@ -245,7 +245,7 @@ button:disabled {
   box-shadow: 0 10px 30px rgba(24, 154, 125, 0.24), inset 0 1px rgba(255, 255, 255, 0.2);
 }
 
-.open-dino svg {
+.open-game svg {
   width: 16px;
   fill: none;
   stroke: currentColor;
@@ -1565,12 +1565,12 @@ kbd {
     height: 36px;
   }
 
-  .open-dino {
+  .open-game {
     min-height: 36px;
     padding-inline: 11px;
   }
 
-  .open-dino svg {
+  .open-game svg {
     display: none;
   }
 

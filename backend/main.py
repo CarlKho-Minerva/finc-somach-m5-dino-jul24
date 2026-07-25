@@ -17,7 +17,7 @@ def parser() -> argparse.ArgumentParser:
     command = argparse.ArgumentParser(
         description=(
             "Decode a local AD8232/ESP32 sEMG stream and post native macOS "
-            "SPACE events for Chrome Dino. Defaults to deterministic mock mode."
+            "SPACE events for Flappy Bird. Defaults to deterministic mock mode."
         )
     )
     mode = command.add_mutually_exclusive_group()
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     print(
-        f"\nSOMACH local pipeline: {mode.upper()} -> DSP -> Quartz -> Chrome Dino\n"
+        f"\nSOMACH local pipeline: {mode.upper()} -> DSP -> Quartz -> Flappy Bird\n"
         f"API: http://{settings.host}:{settings.api_port}\n"
         f"Dashboard WebSocket: ws://{settings.host}:{settings.api_port}/ws\n"
         "Signal: 1000 Hz | notch 60 Hz Q30 | bandpass "

@@ -1,4 +1,4 @@
-"""Real-time orchestration: source -> DSP -> calibration -> Dino jump."""
+"""Real-time orchestration: source -> DSP -> calibration -> game jump."""
 
 from __future__ import annotations
 
