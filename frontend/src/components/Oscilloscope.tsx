@@ -104,42 +104,50 @@ export function Oscilloscope({
 
     const draw = () => {
       resize();
-      const { threshold: liveThreshold, sampleRate: liveRate, armed: isArmed } =
-        propsRef.current;
+      const { threshold: liveThreshold, sampleRate: liveRate } = propsRef.current;
       const left = 18;
       const right = width - 18;
       const top = 20;
       const bottom = height - 34;
       const usableHeight = Math.max(100, bottom - top);
-      const center = top + usableHeight * 0.52;
+      const envelopeBottom = top + usableHeight * 0.76;
+      const envelopeHeight = Math.max(80, envelopeBottom - top);
+      const signalTop = envelopeBottom + 16;
+      const signalBottom = bottom;
+      const signalHeight = Math.max(24, signalBottom - signalTop);
+      const signalCenter = signalTop + signalHeight * 0.5;
 
-      const background = context.createLinearGradient(0, 0, 0, height);
-      background.addColorStop(0, "#091116");
-      background.addColorStop(1, "#060b0e");
-      context.fillStyle = background;
+      context.fillStyle = "#faf9f6";
       context.fillRect(0, 0, width, height);
 
+      const gridSize = 20;
       context.lineWidth = 1;
-      for (let line = 0; line <= 10; line += 1) {
-        const x = left + ((right - left) * line) / 10;
-        context.strokeStyle = line % 5 === 0 ? "rgba(94, 132, 140, .16)" : "rgba(94, 132, 140, .075)";
-        context.beginPath();
-        context.moveTo(x, top);
-        context.lineTo(x, bottom);
-        context.stroke();
+      context.strokeStyle = "#e8e8e8";
+      context.beginPath();
+      for (let x = 0.5; x <= width; x += gridSize) {
+        context.moveTo(x, 0);
+        context.lineTo(x, height);
       }
-      for (let line = 0; line <= 6; line += 1) {
-        const y = top + (usableHeight * line) / 6;
-        context.strokeStyle = line === 3 ? "rgba(94, 132, 140, .18)" : "rgba(94, 132, 140, .075)";
-        context.beginPath();
-        context.moveTo(left, y);
-        context.lineTo(right, y);
-        context.stroke();
+      for (let y = 0.5; y <= height; y += gridSize) {
+        context.moveTo(0, y);
+        context.lineTo(width, y);
       }
+      context.stroke();
+
+      context.strokeStyle = "rgba(0, 0, 0, .14)";
+      context.beginPath();
+      for (let x = gridSize * 5; x < width; x += gridSize * 5) {
+        for (let y = gridSize * 5; y < height; y += gridSize * 5) {
+          context.moveTo(x - 3, y + 0.5);
+          context.lineTo(x + 3, y + 0.5);
+          context.moveTo(x + 0.5, y - 3);
+          context.lineTo(x + 0.5, y + 3);
+        }
+      }
+      context.stroke();
 
       const visibleSamples = Math.max(500, Math.min(4_000, Math.round((liveRate || 1_000) * 2.5)));
       const raw = signals.current.raw.slice(-visibleSamples);
-      const filtered = signals.current.filtered.slice(-visibleSamples);
       const envelope = signals.current.rms.slice(-visibleSamples);
 
       let rawMean = 0;
@@ -148,70 +156,56 @@ export function Oscilloscope({
 
       let signalRange = 8;
       for (const sample of raw) signalRange = Math.max(signalRange, Math.abs(sample - rawMean));
-      for (const sample of filtered) signalRange = Math.max(signalRange, Math.abs(sample));
 
-      const signalAmplitude = usableHeight * 0.3;
+      const signalAmplitude = signalHeight * 0.42;
       const signalY = (value: number, baseline = 0) =>
-        center - ((value - baseline) / signalRange) * signalAmplitude;
+        signalCenter - ((value - baseline) / signalRange) * signalAmplitude;
 
       context.save();
       context.beginPath();
-      context.rect(left, top, right - left, usableHeight);
+      context.rect(left, signalTop, right - left, signalHeight);
       context.clip();
 
-      context.strokeStyle = "rgba(84, 178, 230, .32)";
+      context.strokeStyle = "#e5e5e5";
       context.lineWidth = 1;
-      trace(context, raw, left, right, (value) => signalY(value, rawMean));
-
-      context.shadowBlur = 8;
-      context.shadowColor = "rgba(82, 232, 197, .35)";
-      context.strokeStyle = "rgba(82, 232, 197, .92)";
-      context.lineWidth = 1.45;
-      trace(context, filtered, left, right, (value) => signalY(value));
-      context.shadowBlur = 0;
+      context.beginPath();
+      const tickStep = Math.max(1, Math.ceil(raw.length / 260));
+      for (let index = 0; index < raw.length; index += tickStep) {
+        const x = left + (index / Math.max(1, raw.length - 1)) * (right - left);
+        context.moveTo(x, signalCenter);
+        context.lineTo(x, signalY(raw[index], rawMean));
+      }
+      context.stroke();
+      context.restore();
 
       let envelopeMax = 0;
       for (const value of envelope) envelopeMax = Math.max(envelopeMax, value);
-      const desiredScale = Math.max(1, liveThreshold * 1.65, envelopeMax * 1.2);
+      const desiredScale = Math.max(1, liveThreshold * 1.55, envelopeMax * 1.15);
       if (envelopeScale === 0) envelopeScale = desiredScale;
       if (!draggingRef.current) {
         const response = desiredScale > envelopeScale ? 0.18 : 0.018;
         envelopeScale += (desiredScale - envelopeScale) * response;
       }
       const scaleMax = Math.max(1, envelopeScale);
-      const envelopeY = (value: number) => bottom - (value / scaleMax) * usableHeight;
+      const envelopeY = (value: number) =>
+        envelopeBottom - (value / scaleMax) * envelopeHeight;
+
+      context.save();
+      context.beginPath();
+      context.rect(left, top, right - left, envelopeHeight);
+      context.clip();
 
       if (envelope.length > 1) {
-        const span = Math.max(1, envelope.length - 1);
-        context.beginPath();
-        for (let index = 0; index < envelope.length; index += 1) {
-          const x = left + (index / span) * (right - left);
-          const y = envelopeY(envelope[index]);
-          if (index === 0) context.moveTo(x, y);
-          else context.lineTo(x, y);
-        }
-        context.lineTo(right, bottom);
-        context.lineTo(left, bottom);
-        context.closePath();
-        const envelopeFill = context.createLinearGradient(0, top, 0, bottom);
-        envelopeFill.addColorStop(0, "rgba(169, 117, 255, .24)");
-        envelopeFill.addColorStop(1, "rgba(169, 117, 255, .015)");
-        context.fillStyle = envelopeFill;
-        context.fill();
-
-        context.strokeStyle = "rgba(181, 136, 255, .9)";
-        context.lineWidth = 2;
-        context.shadowBlur = 7;
-        context.shadowColor = "rgba(169, 117, 255, .35)";
+        context.strokeStyle = "#ff2b00";
+        context.lineWidth = 2.5;
         trace(context, envelope, left, right, envelopeY);
-        context.shadowBlur = 0;
       }
 
       const thresholdY = envelopeY(liveThreshold);
-      metricsRef.current = { top, bottom, scaleMax, thresholdY };
-      context.setLineDash([7, 5]);
-      context.strokeStyle = isArmed ? "rgba(255, 195, 92, .95)" : "rgba(144, 151, 153, .72)";
-      context.lineWidth = 1.3;
+      metricsRef.current = { top, bottom: envelopeBottom, scaleMax, thresholdY };
+      context.setLineDash([]);
+      context.strokeStyle = "#000000";
+      context.lineWidth = 1;
       context.beginPath();
       context.moveTo(left, thresholdY);
       context.lineTo(right, thresholdY);
@@ -219,27 +213,35 @@ export function Oscilloscope({
       context.setLineDash([]);
       context.restore();
 
-      const thresholdLabel = `T  ${formatThreshold(liveThreshold)}`;
-      context.font = "600 11px ui-monospace, SFMono-Regular, Menlo, monospace";
+      context.strokeStyle = "#e5e5e5";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(left, envelopeBottom + 8);
+      context.lineTo(right, envelopeBottom + 8);
+      context.stroke();
+
+      const thresholdLabel = `[ THRESHOLD: ${formatThreshold(liveThreshold)} ]`;
+      context.font = "700 10px ui-monospace, SFMono-Regular, Menlo, monospace";
       const labelWidth = context.measureText(thresholdLabel).width + 16;
       const labelX = right - labelWidth;
-      const labelY = Math.max(top + 1, Math.min(bottom - 24, thresholdY - 11));
-      context.fillStyle = isArmed ? "rgba(255, 195, 92, .16)" : "rgba(150, 158, 160, .12)";
+      const labelY = Math.max(top + 1, Math.min(envelopeBottom - 24, thresholdY - 11));
+      context.fillStyle = "#000000";
       context.fillRect(labelX, labelY, labelWidth, 22);
-      context.fillStyle = isArmed ? "#ffd078" : "#a1aaac";
+      context.fillStyle = "#ffffff";
       context.fillText(thresholdLabel, labelX + 8, labelY + 15);
 
-      context.fillStyle = "rgba(146, 169, 174, .65)";
+      context.fillStyle = "rgba(115, 115, 115, .72)";
       context.font = "500 10px ui-monospace, SFMono-Regular, Menlo, monospace";
-      context.fillText(`2.5 s BUFFER`, left, height - 12);
-      const rateText = `${Math.round(liveRate || 1_000)} Hz`;
+      context.fillText("[ RAW REFERENCE ]", left, signalTop + 10);
+      context.fillText("[ BUFFER: 2.5S ]", left, height - 12);
+      const rateText = `[ RATE: ${Math.round(liveRate || 1_000)}HZ ]`;
       context.fillText(rateText, right - context.measureText(rateText).width, height - 12);
 
-      if (!raw.length && !filtered.length) {
-        context.fillStyle = "rgba(177, 197, 201, .5)";
+      if (!raw.length && !envelope.length) {
+        context.fillStyle = "rgba(115, 115, 115, .62)";
         context.font = "600 12px ui-monospace, SFMono-Regular, Menlo, monospace";
         context.textAlign = "center";
-        context.fillText("WAITING FOR SIGNAL", width / 2, center + 4);
+        context.fillText("WAITING FOR SIGNAL", width / 2, top + envelopeHeight * 0.55);
         context.textAlign = "start";
       }
 
