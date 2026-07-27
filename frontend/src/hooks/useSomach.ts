@@ -11,6 +11,7 @@ import type {
 
 const MAX_BUFFER_SAMPLES = 6_000;
 const CALIBRATION_SECONDS = 3;
+const BROWSER_DEMO = import.meta.env.PROD && !import.meta.env.VITE_WS_URL;
 
 const initialTelemetry: TelemetryState = {
   seq: 0,
@@ -104,7 +105,12 @@ export function useSomach(): SomachController {
   const socketRef = useRef<WebSocket | null>(null);
   const eventIdRef = useRef(0);
   const calibrationTimerRef = useRef<number | null>(null);
-  const wsUrl = useMemo(resolveWebSocketUrl, []);
+  const demoBurstStartedAtRef = useRef<number | null>(null);
+  const demoPhaseRef = useRef(0);
+  const wsUrl = useMemo(
+    () => (BROWSER_DEMO ? "browser://synthetic-demo" : resolveWebSocketUrl()),
+    [],
+  );
 
   const publishEvent = useCallback(
     (kind: DashboardEvent["kind"], message: string) => {
@@ -260,6 +266,72 @@ export function useSomach(): SomachController {
   );
 
   useEffect(() => {
+    if (BROWSER_DEMO) {
+      setConnection({
+        status: "connected",
+        attempt: 0,
+        nextRetryMs: null,
+        lastConnectedAt: Date.now(),
+        error: null,
+      });
+      setTelemetry((current) => ({
+        ...current,
+        rms: 4.5,
+        threshold: 50,
+        sampleRate: 1_000,
+        source: "synthetic browser demo",
+        device: "browser://somach-public-demo",
+        quartz: { available: false, trusted: false, lastCallMs: null },
+        lastPacketAt: Date.now(),
+      }));
+
+      const streamTimer = window.setInterval(() => {
+        const now = performance.now();
+        const burstAge = demoBurstStartedAtRef.current === null
+          ? Number.POSITIVE_INFINITY
+          : now - demoBurstStartedAtRef.current;
+        const burstEnvelope = burstAge >= 0 && burstAge < 360
+          ? Math.sin((burstAge / 360) * Math.PI)
+          : 0;
+        const raw: number[] = [];
+        const filtered: number[] = [];
+        const rmsSeries: number[] = [];
+        const rms = 4.5 + burstEnvelope * 74 + Math.sin(now / 310) * 0.35;
+
+        for (let index = 0; index < 20; index += 1) {
+          demoPhaseRef.current += 0.17;
+          const phase = demoPhaseRef.current;
+          const baseline = Math.sin(phase * 1.7) * 2.4 + Math.sin(phase * 0.37) * 1.1;
+          const impulse = burstEnvelope * Math.sin(phase * 4.2) * 54;
+          const filteredValue = baseline + impulse;
+          filtered.push(filteredValue);
+          raw.push(2_048 + filteredValue * 5.5 + Math.sin(phase * 0.8) * 12);
+          rmsSeries.push(rms);
+        }
+
+        pushCapped(signals.current.raw, raw);
+        pushCapped(signals.current.filtered, filtered);
+        pushCapped(signals.current.rms, rmsSeries);
+        signals.current.revision += 1;
+        setTelemetry((current) => ({
+          ...current,
+          seq: current.seq + 1,
+          timestamp: Date.now() / 1_000,
+          rms,
+          recording: current.recording.active
+            ? {
+                ...current.recording,
+                seconds: current.recording.seconds + 0.02,
+                samples: current.recording.samples + 20,
+              }
+            : current.recording,
+          lastPacketAt: Date.now(),
+        }));
+      }, 20);
+
+      return () => window.clearInterval(streamTimer);
+    }
+
     let disposed = false;
     let reconnectTimer: number | null = null;
     let attempt = 0;
@@ -372,6 +444,18 @@ export function useSomach(): SomachController {
 
   const calibrate = useCallback(async () => {
     startCalibrationTicker();
+    if (BROWSER_DEMO) {
+      publishEvent("info", "Measuring the synthetic three-second baseline");
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 3_000));
+      stopCalibrationTicker();
+      setTelemetry((current) => ({
+        ...current,
+        threshold: 15,
+        calibration: { active: false, progress: 1, remaining: 0 },
+      }));
+      publishEvent("info", "Browser-demo baseline calibrated");
+      return;
+    }
     try {
       await postJson("/api/calibrate");
       publishEvent("info", "Capturing three seconds of passive baseline");
@@ -396,6 +480,10 @@ export function useSomach(): SomachController {
       const next = Math.max(0, value);
       const previous = telemetry.threshold;
       previewThreshold(next);
+      if (BROWSER_DEMO) {
+        publishEvent("info", `Threshold set to ${next.toFixed(1)}`);
+        return;
+      }
       try {
         await postJson("/api/threshold", { value: next });
       } catch (error) {
@@ -410,6 +498,10 @@ export function useSomach(): SomachController {
     async (armed: boolean) => {
       const previous = telemetry.armed;
       setTelemetry((current) => ({ ...current, armed }));
+      if (BROWSER_DEMO) {
+        publishEvent("info", armed ? "Demo detection armed" : "Demo detection paused");
+        return;
+      }
       try {
         await postJson("/api/armed", { armed });
         publishEvent("info", armed ? "Jump detection armed" : "Jump detection paused");
@@ -422,12 +514,26 @@ export function useSomach(): SomachController {
   );
 
   const triggerMock = useCallback(async () => {
+    if (BROWSER_DEMO) {
+      demoBurstStartedAtRef.current = performance.now();
+      setTelemetry((current) => {
+        if (!current.armed) return current;
+        return {
+          ...current,
+          jumpCount: current.jumpCount + 1,
+          lastJumpAt: Date.now(),
+        };
+      });
+      if (telemetry.armed) publishEvent("jump", "Demo JUMP impulse accepted");
+      else publishEvent("info", "Demo impulse generated · arm detection to count it");
+      return;
+    }
     try {
       await postJson("/api/mock/trigger");
     } catch (error) {
       publishEvent("error", error instanceof Error ? error.message : "Mock trigger failed");
     }
-  }, [postJson, publishEvent]);
+  }, [postJson, publishEvent, telemetry.armed]);
 
   const startRecording = useCallback(async () => {
     const previous = telemetry.recording;
@@ -441,6 +547,10 @@ export function useSomach(): SomachController {
         path: null,
       },
     }));
+    if (BROWSER_DEMO) {
+      publishEvent("info", "Browser-demo capture started");
+      return;
+    }
     try {
       await postJson("/api/recording/start");
       publishEvent("info", "Local training session recording");
@@ -464,6 +574,10 @@ export function useSomach(): SomachController {
           markers: current.recording.markers + 1,
         },
       }));
+      if (BROWSER_DEMO) {
+        if (label === "artifact") publishEvent("info", "Demo artifact marker added");
+        return;
+      }
       try {
         await postJson("/api/recording/mark", { label });
         if (label === "artifact") publishEvent("info", "Artifact excluded from training");
@@ -484,6 +598,10 @@ export function useSomach(): SomachController {
       ...current,
       recording: { ...current.recording, active: false },
     }));
+    if (BROWSER_DEMO) {
+      publishEvent("info", "Browser-demo capture stopped · local backend saves real sessions");
+      return;
+    }
     try {
       await postJson("/api/recording/stop");
       publishEvent("info", "Training session saved locally");
@@ -501,6 +619,15 @@ export function useSomach(): SomachController {
       ...current,
       model: { ...current.model, error: null },
     }));
+    if (BROWSER_DEMO) {
+      const message = "Training requires the local backend and a saved electrode session";
+      setTelemetry((current) => ({
+        ...current,
+        model: { ...current.model, error: message },
+      }));
+      publishEvent("error", message);
+      return;
+    }
     try {
       publishEvent("info", "Training classifier locally on CPU");
       await postJson("/api/model/train");
@@ -525,6 +652,10 @@ export function useSomach(): SomachController {
         ...current,
         model: { ...current.model, active },
       }));
+      if (BROWSER_DEMO) {
+        publishEvent("info", active ? "Demo model active" : "Demo RMS trigger active");
+        return;
+      }
       try {
         await postJson("/api/model/activate", { active });
         publishEvent("info", active ? "Learned model active" : "RMS trigger active");

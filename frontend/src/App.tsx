@@ -226,7 +226,9 @@ export default function App() {
   };
 
   const sourceValue = isMock
-    ? "Mock generator"
+    ? sourceName.includes("browser demo")
+      ? "Browser demo"
+      : "Mock generator"
     : sourceName.includes("hardware") || sourceName.includes("serial")
       ? "ESP32 hardware"
       : telemetry.source === "unknown"
