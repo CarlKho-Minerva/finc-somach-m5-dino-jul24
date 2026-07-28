@@ -9,9 +9,11 @@ uv run pytest
 npm --prefix frontend ci
 npm --prefix frontend run build
 if command -v pio >/dev/null 2>&1; then
-  pio run --project-dir firmware
+  pio run --project-dir firmware -e esp32dev
+  pio run --project-dir firmware -e dual_ad8232
 else
-  uvx --with pip --from platformio pio run --project-dir firmware
+  uvx --with pip --from platformio pio run --project-dir firmware -e esp32dev
+  uvx --with pip --from platformio pio run --project-dir firmware -e dual_ad8232
 fi
 git diff --check
 

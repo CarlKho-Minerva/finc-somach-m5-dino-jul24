@@ -162,8 +162,36 @@ Open Flappy Bird in its own Chrome window with:
 ```
 
 Press `Control-C` in the launch terminal to stop the backend and dashboard.
-Equivalent shortcuts are `make mock`, `make hardware`, `make probe`, and
-`make test`.
+Equivalent shortcuts are `make mock`, `make hardware`, `make drive-hybrid`,
+`make drive`, `make drive-mock`, `make probe`, and `make test`.
+
+## Two-channel threshold driving controller
+
+The separate `/drive` dashboard uses two independent RMS thresholds—no model
+training and no reverse command. Sensor A keeps the proven mylohyoid placement;
+Sensor B observes the left masseter. The fixed mapping is:
+
+| Muscle gate | Arrow output |
+| --- | --- |
+| A only | Forward / `UP` for 1.0 s |
+| B only | `LEFT` for 0.2 s |
+| A+B actually overlapping | `RIGHT` for 0.2 s |
+
+For the current one-working-sensor demo, run `make drive-hybrid`. Channel A is
+the live mylohyoid signal and controls forward. The failed physical Channel B
+is discarded before DSP; an explicitly labeled dashboard button supplies a
+simulated left test pulse, and right is disabled. This hybrid path demonstrates
+the real biosignal-to-forward loop and the software steering path without
+claiming that the simulated input is a decoded biosignal.
+
+With two working AD8232 modules, start the full two-channel dashboard with
+`make drive`. To verify the interface without hardware or key output, use
+`make drive-mock`. All drive modes run independently on port 8124 and leave the
+original one-channel Flappy backend unchanged.
+
+See [the exact dual-sensor wiring, flashing, calibration, threshold tuning, and
+playbook](docs/directional-drive.md). Sensor B uses `OUTPUT→GPIO39/VN`,
+`SDN→GPIO26`, `LO+→GPIO33`, and `LO-→GPIO34`.
 
 ## Electrode preparation and placement
 
